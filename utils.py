@@ -23,7 +23,7 @@ def rocket_animation():
         " 🚀       ",
         "🚀        ",
     ]
-    for _ in range(3):
+    for _ in range(5):
         for frame in rocket_frames:
             clear()
             print(frame)
@@ -35,4 +35,4 @@ def print_rgb_header(text):
     colors = ['\033[91m', '\033[93m', '\033[92m', '\033[96m', '\033[94m', '\033[95m']
     for c in colors:
         print(c + text + '\033[0m')
-        time.sleep(0.05)
+        time.sleep(0.004)
